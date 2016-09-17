@@ -1,0 +1,14 @@
+<table border="1" style="width:100%">
+    <tr>
+        {% for k in headers %}
+            <th>{{ k }}</th>
+        {% endfor %}
+    </tr>
+    {% for r in result %}
+    <tr>
+        {% for k in r %}
+            <td>{{ k }}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>

@@ -14,14 +14,11 @@
 
 from django.conf.urls import include, url
 from django.contrib import admin
-
-from searchApp.document import search_service
+import searchApp.urls
 
 admin.autodiscover()
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    # Examples:
-    # url(r'^$', 'library.views.home', name='home'),
-    url(r'^search$', search_service)
+    url(r'^search', include(searchApp.urls))
 ]
