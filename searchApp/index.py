@@ -34,7 +34,7 @@ class SearchObject():
     def __init__(self, modelClass, fields, rank, **kwargs):
         self.model = modelClass
         self.fields = fields
-        self.rank = kwargs.get(rank, None)
+        self.rank = rank
         self.html_fields = kwargs.get('html_fields', None)
         self.cached_fields = {}
 
