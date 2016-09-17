@@ -8,6 +8,3 @@ class IndexModel(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
     processed = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
-
-
-

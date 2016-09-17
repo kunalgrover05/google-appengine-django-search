@@ -5,17 +5,46 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse, HttpResponseNotFound
 import urllib
 
-def my_view(request):
-    index_create()
-    index_delete()
+def index_create_single(instance):
+    """Call this function for manually updating a single document, 
+       not recommended"""
+    model = instance.__class__.__name__
+    searchObj = siteIndex.registry.get(model)
 
-    return HttpResponse('<h1>Page was found</h1>')
+    obj = IndexModel.objects.get(content_type=ContentType.objects.get(model=model),
+        object_id=instance.pk)
+
+    rank = searchObj.rank
+    fields_map = searchObj.cached_fields
+
+    index = search.Index(name=model)
+    index.put(index_document(obj, fields_map, rank))
+
+    # Update this model value
+    obj.processed = True
+    obj.save()
+
+def index_delete_single(instance):
+    """Call this function for manually deleting a single document, 
+       not recommended"""
+    model = instance.__class__.__name__
+    searchObj = siteIndex.registry.get(model)
+
+    obj = IndexModel.objects.get(content_type=ContentType.objects.get(model=model),
+     object_id=instance.pk)
+    
+    index = search.Index(name=model)
+    index.delete(str(obj.pk))
+
+    # Update this model value
+    obj.processed = True
+    obj.save()
 
 def index_create():
-
-    for model in siteIndex.registry:
-        rank = siteIndex.ranks[model]
-        fields_map = siteIndex.cached_fields[model]
+    """Batch Update Search indexes, preferably not run in request period"""
+    for model, searchObj in siteIndex.registry.iteritems():
+        rank = searchObj.rank
+        fields_map = searchObj.cached_fields
         all_objs = IndexModel.objects.filter(deleted=False)\
                    .filter(processed=False).filter(content_type=ContentType.objects.get(model=model))\
                    .all()[0:150]
@@ -24,30 +53,42 @@ def index_create():
         index = search.Index(name=model)
         
         for obj in all_objs:
-            docs.append(index_document(obj, fields_map, index, rank))
+            obj.processed = True
+            obj.save()
+            docs.append(index_document(obj, fields_map, rank))
         
         index.put(docs)
 
+# Delete Search Indexes
 def index_delete():
-    for model in siteIndex.registry:
-        fields_map = siteIndex.cached_fields[model]
-        objs = IndexModel.objects.filter(deleted=True)\
+    """Batch delete Search indexes, preferably not run in request period"""
+    for model, searchObj in siteIndex.registry.iteritems():
+        fields_map = searchObj.cached_fields
+        all_objs = IndexModel.objects.filter(deleted=True)\
                .filter(processed=False).filter(content_type=ContentType.objects.get(model=model))\
                .all()[0:150]
+        
         docs = []
         index = search.Index(name=model)
-        for o in objs:
-            o.processed = True
-            o.save()
-            docs.append(str(o.pk))
+        
+        for obj in all_objs:
+            index_delete_single(obj.content_object)
+
+            obj.processed = True
+            obj.save()
+            # Deleting requires just list of document IDs
+            docs.append(str(obj.pk))
 
         index.delete(docs)
 
-def index_document(obj, fields_map, index, rank):
-    o = obj.content_object
+# Index a document with the given data
+def index_document(obj, fields_map, rank):
+    content_obj = obj.content_object
     search_fields = []
 
     def get_field(i, f):
+        # Magic function!! Traverses down foreign key
+        # relationships
         if '.' in f:
             field_split = f.split('.', 1)
             v = getattr(i, field_split[0])
@@ -56,34 +97,35 @@ def index_document(obj, fields_map, index, rank):
             return getattr(i, f)
       
     for field_name, field_type in fields_map.iteritems():
-        # Make it work for foreign keys
-        field_value = get_field(o, field_name)
+        field_value = get_field(content_obj, field_name)
         
         if field_value.__class__.__name__ == 'ManyRelatedManager':
             # If the value is a Many to Many class, simply take the string representation
             # of the instance
-            for f in value.all():
+            for f in field_value.all():
                 search_fields += [search.TextField(name=field_name, value=str(f))]
 
         else:
             search_fields += [field_type(name=field_name.replace('.', '_'), value=field_value)]
 
+    def get_rank():
+        if rank is None:
+            return 0
+        else:
+            return getattr(o, rank)() 
 
-    # ALways delete by overwriting
-    doc_original = index.get(str(o.pk))
-
+    # We can't update, we just overwrite always 
     doc = search.Document(
         doc_id=str(obj.pk),
         fields=search_fields,
-        rank=getattr(o, rank)()
+        rank=get_rank()
     )
 
     obj.processed = True
     obj.save()
     return doc
 
-
-# Search service. You can choose to search with a single type or all types
+# Search service View
 def search_service(request):
     index_name = request.GET.get('type', 'Book')
     limit = int(request.GET.get('start', 0)) + int(request.GET.get('end', 5))

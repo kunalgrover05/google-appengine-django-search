@@ -50,7 +50,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'searchApp',
-    'test'
+    'testApp'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,12 +93,14 @@ if os.getenv('SERVER_SOFTWARE', '').startswith('Google App Engine'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'HOST': '/cloudsql/<your-project-id>:<your-cloud-sql-instance>',
-            'NAME': '<your-database-name>',
+            'HOST': '/cloudsql/django-test-143704:us-central1:appengine-test',
+            'NAME': 'appengine',
             'USER': 'root',
+            'PASSWORD': 'root'
         }
     }
 else:
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
