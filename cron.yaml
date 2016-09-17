@@ -1,0 +1,4 @@
+cron:
+- description: Index ranking
+  url: /index
+  schedule: every 5 minutes
