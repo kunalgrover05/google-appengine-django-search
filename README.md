@@ -66,3 +66,10 @@ You can use index_create_single(obj) and index_delete_single(obj) from searchApp
 
 ### Get results from Search API
 Use search_index(index_name, query_string, query_options) from searchApp.document, see searchApp.views for example implementation.
+
+### Search API examples to test out in testApp
+- [tags: Horror NOT tags: Romance] (https://django-test-143704.appspot.com/search?search_type=Book&query=tags%3A+Horror+NOT+tags%3A+Romance&start=0&end=5)
+- [date < 2005-04-01] (https://django-test-143704.appspot.com/search?search_type=Book&query=date+%3C+2005-04-01&start=0&end=5)
+- [description: novel] (https://django-test-143704.appspot.com/search?search_type=Book&query=description%3A+novel&start=0&end=5)
+- [author_name=Jean] (https://django-test-143704.appspot.com/search?search_type=Book&query=author_name%3A+Jean&start=0&end=5)
+- [author_publisher_name=Atlas Press] (https://django-test-143704.appspot.com/search?search_type=Book&query=author_publisher_name%3A+Atlas+Press&start=0&end=5)
