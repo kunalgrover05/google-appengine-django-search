@@ -47,7 +47,7 @@ class SearchObject():
 class SearchIndex():
     @staticmethod
     def getSearchType(fieldType, isHTML):
-        MAP = {
+        DATATYPE_MAP = {
             models.fields.DateField: search.DateField,
             models.fields.IntegerField: search.NumberField
         }
@@ -55,7 +55,7 @@ class SearchIndex():
         if (isHTML):
             return search.HtmlField
 
-        return MAP.get(fieldType, search.TextField)
+        return DATATYPE_MAP.get(fieldType, search.TextField)
 
     def __init__(self):
         self.registry = {}
