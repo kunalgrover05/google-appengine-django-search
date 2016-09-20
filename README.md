@@ -53,6 +53,7 @@ cron:
 * That's it! Ready to use search service!
 
 #### Note:   
+- The html_fields attribute represents a list of fields where searching should ignore the HTML tags. Helpful if you allow users to save HTML in text fields.
 - Custom signals can be added using https://docs.djangoproject.com/en/1.10/topics/signals/#defining-and-sending-signals
 - The deleteSignal can be used if using Soft deletes(ie not deleting from the database by setting some field). 
 - The updateSignal is helpful when Foreign key dependencies are updated. Currently, the update will be done using post_save which will cause missed updates in dependencies.
